@@ -3,3 +3,5 @@ dist
 .env
 prisma/*.db
 prisma/*.db-journal
+uploads
+data

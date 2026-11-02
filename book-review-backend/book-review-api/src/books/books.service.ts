@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
@@ -37,6 +37,9 @@ export class BooksService {
   }
 
   async update(id: number, dto: UpdateBookDto) {
+    if (Object.keys(dto).length === 0) {
+      throw new BadRequestException('At least one field must be provided');
+    }
     await this.findOne(id);
     return this.prisma.book.update({
       where: { id },

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Book, getBook, deleteBook } from '@/lib/api';
 import BookFormModal from '@/components/BookFormModal';
+import ReviewCard from '@/components/ReviewCard';
 import ReviewForm from '@/components/ReviewForm';
 import { useToast } from '@/components/ToastProvider';
 
@@ -142,13 +143,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
             </p>
           ) : (
             book.reviews.map(r => (
-              <div key={r.id} className="review-card">
-                <div className="review-top">
-                  <Stars rating={r.rating} />
-                  <span className="review-id">#{r.id}</span>
-                </div>
-                <p className="review-text">{r.content}</p>
-              </div>
+              <ReviewCard key={r.id} bookId={book.id} review={r} onChange={load} />
             ))
           )}
         </div>

@@ -35,6 +35,11 @@ export interface CreateReviewDto {
   content: string;
 }
 
+export interface UpdateReviewDto {
+  rating?: number;
+  content?: string;
+}
+
 // ─── Books ────────────────────────────────────────────────────────────────────
 
 export async function getBooks(): Promise<Book[]> {
@@ -94,7 +99,10 @@ export async function uploadCover(file: File): Promise<string> {
     throw new Error(err.message || 'Failed to upload image');
   }
   const data = await res.json();
-  return data.url as string;
+  if (typeof data.url !== 'string') {
+    throw new Error('Upload response did not include an image URL');
+  }
+  return new URL(data.url, API_BASE).toString();
 }
 
 // ─── Reviews ──────────────────────────────────────────────────────────────────
@@ -116,4 +124,28 @@ export async function createReview(bookId: number, dto: CreateReviewDto): Promis
     throw new Error(err.message || 'Failed to create review');
   }
   return res.json();
+}
+
+export async function updateReview(
+  bookId: number,
+  reviewId: number,
+  dto: UpdateReviewDto,
+): Promise<Review> {
+  const res = await fetch(`${API_BASE}/books/${bookId}/reviews/${reviewId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(dto),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Failed to update review');
+  }
+  return res.json();
+}
+
+export async function deleteReview(bookId: number, reviewId: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/books/${bookId}/reviews/${reviewId}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('Failed to delete review');
 }

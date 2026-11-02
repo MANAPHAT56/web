@@ -1,33 +1,45 @@
-# Book Review API (NestJS + Prisma + SQLite)
+# Book Review API
 
-## วิธีรัน
-```bash
-npm install
+NestJS REST API backed by Prisma and SQLite. The production database and uploaded
+covers are stored in Docker volumes; schema changes are applied with Prisma
+migrations on container startup.
+
+## Run locally
+
+```powershell
+npm ci
 npx prisma generate
-npx prisma db push      # สร้างตารางใน SQLite (prisma/dev.db)
-npm run start:dev       # http://localhost:3000
+npx prisma migrate deploy
+npm run start:dev
+```
+
+The API listens on `http://localhost:3000`. For a local PowerShell session,
+configure the runtime environment before starting NestJS (Nest does not load
+`.env` files by itself):
+
+```powershell
+$env:DATABASE_URL = 'file:./dev.db'
+$env:FRONTEND_ORIGIN = 'http://localhost:3001'
+$env:API_PUBLIC_URL = 'http://localhost:3000'
+$env:UPLOAD_DIR = 'uploads'
 ```
 
 ## Endpoints
-| Method | Path | คำอธิบาย |
+
+| Method | Path | Purpose |
 |---|---|---|
-| POST | /books | สร้างหนังสือ |
-| GET | /books | รายการหนังสือ พร้อม reviews (nested) |
-| GET | /books/:id | หนังสือ 1 เล่ม พร้อม reviews |
-| PATCH | /books/:id | แก้ไขหนังสือ |
-| DELETE | /books/:id | ลบหนังสือ (reviews ถูกลบตาม) |
-| POST | /books/:bookId/reviews | เพิ่มรีวิวให้หนังสือเล่มนั้น |
-| GET | /books/:bookId/reviews | รีวิวทั้งหมดของหนังสือ |
+| POST | `/books` | Create a book |
+| GET | `/books` | List books with nested reviews |
+| GET | `/books/:id` | Get a book with reviews |
+| PATCH | `/books/:id` | Update a book |
+| DELETE | `/books/:id` | Delete a book and its reviews |
+| POST | `/books/:bookId/reviews` | Create a review |
+| GET | `/books/:bookId/reviews` | List reviews |
+| PATCH | `/books/:bookId/reviews/:reviewId` | Update a review |
+| DELETE | `/books/:bookId/reviews/:reviewId` | Delete a review |
+| POST | `/books/upload` | Upload a JPG, PNG, or WebP cover (max 5 MB) |
+| GET | `/uploads/:filename` | Retrieve an uploaded cover |
+| GET | `/health` | Container health check |
 
-## ตัวอย่าง
-```bash
-curl -X POST localhost:3000/books -H "Content-Type: application/json" \
-  -d '{"title":"Clean Code","author":"Robert C. Martin"}'
-
-curl -X POST localhost:3000/books/1/reviews -H "Content-Type: application/json" \
-  -d '{"rating":5,"content":"อ่านสนุกมาก"}'
-
-curl localhost:3000/books
-```
-
-Validation: `rating` ต้องเป็นจำนวนเต็ม 1-5, `title`/`author`/`content` ห้ามว่าง
+Book titles/authors and review content must not be empty. Review ratings must be
+integers from 1 to 5. Updating a review is scoped to its book.

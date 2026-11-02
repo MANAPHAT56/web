@@ -1,6 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
+import { UpdateReviewDto } from './dto/update-review.dto';
 
 @Injectable()
 export class ReviewsService {
@@ -24,5 +29,32 @@ export class ReviewsService {
       where: { bookId },
       orderBy: { id: 'asc' },
     });
+  }
+
+  async update(bookId: number, reviewId: number, dto: UpdateReviewDto) {
+    if (Object.keys(dto).length === 0) {
+      throw new BadRequestException('At least one field must be provided');
+    }
+
+    const result = await this.prisma.review.updateMany({
+      where: { id: reviewId, bookId },
+      data: dto,
+    });
+    if (result.count === 0) {
+      throw new NotFoundException(`Review #${reviewId} not found`);
+    }
+
+    return this.prisma.review.findUniqueOrThrow({ where: { id: reviewId } });
+  }
+
+  async remove(bookId: number, reviewId: number) {
+    const result = await this.prisma.review.deleteMany({
+      where: { id: reviewId, bookId },
+    });
+    if (result.count === 0) {
+      throw new NotFoundException(`Review #${reviewId} not found`);
+    }
+
+    return { deleted: true, id: reviewId };
   }
 }
